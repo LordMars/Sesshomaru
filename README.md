@@ -5,7 +5,7 @@ The script itself does not schedule when it is run.
 That is to be done on the host machine, for example by way of TaskScheduler and batch files on windows machines.
 
 In order for the script to run correctly a few things are required.
-- a botConfig.json file
+- a botConfig.json file in the resources directory
     This contains
     - token - the token of your discord bot
     - guildId - the id for the server the server the bot is in

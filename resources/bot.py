@@ -4,13 +4,16 @@ from discord.utils import get
 import pytz
 import json
 import datetime
+import os
+from models import ScheduleEventRequest as sched
 
-jsonFile = "botConfig.json"  
+script_dir = os.path.dirname(os.path.realpath(__file__))
+jsonFile = os.path.join(script_dir, "botConfig.json")
+
 data = {}
 with open(jsonFile, "r") as f:
     data = json.load(f)
 f.close()
-
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
@@ -46,7 +49,16 @@ async def createEvent():
     global guild
     global event
     
-    event = {
+    event = sched(
+        name=event_name,
+        description=event_description,
+        start_time=next_event_start,
+        end_time=next_event_end,
+        entity_type=discord.EntiyType.external,
+        location= "",
+        privacy_level= discord.PrivacyLevel.guild_only
+    )
+    """event = {
         "name": event_name,
         "description": event_description,
         "start_time": next_event_start,
@@ -54,7 +66,7 @@ async def createEvent():
         "entity_type": discord.EntityType.external,
         "location": "",
         "privacy_level": discord.PrivacyLevel.guild_only,
-    }
+    }"""
 
 @bot.event
 async def checkEventExists():
@@ -87,4 +99,5 @@ async def on_ready():
     print("After Scheduled event")
 
 # Start the bot.
-bot.run(token)
+def run():
+    bot.run(token)
