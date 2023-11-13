@@ -6,6 +6,7 @@ import json
 import datetime
 import os
 from models import ScheduleEventRequest as sched
+import asyncio
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 jsonFile = os.path.join(script_dir, "botConfig.json")
@@ -22,81 +23,84 @@ bot = commands.Bot(intents=intents, command_prefix = '.')
 # Define the event name and description.
 token = data["token"]
 guildId = data["guildId"]
-event_name = data["eventList"][0]["name"]
-event_description = data["eventList"][0]["description"]
-eventStartTimeHours = data["eventList"][0]["startTime"]["hour"]
-eventStartTimeMinutes = data["eventList"][0]["startTime"]["minute"]
-
-# Get the current time in UTC.
-utc_now = pytz.utc.localize(datetime.datetime.now())
-
-# Calculate the start and end times of the next event.
-dayOfWeek = datetime.datetime.now(pytz.timezone("America/New_York")).weekday()
-daysUntilMonday = (7 - dayOfWeek) % 7
-nextMonday = datetime.timedelta(days=daysUntilMonday) + datetime.datetime.now(pytz.timezone("America/New_York"))
-nextMonday = nextMonday.replace(hour=eventStartTimeHours, minute=eventStartTimeMinutes, second=0)
-
-next_event_start = nextMonday
-print(f"Start Time: {next_event_start}")
-next_event_end = next_event_start + datetime.timedelta(hours=1)
-print(f"End Time: {next_event_end}")
 
 guild = None
-event = {}
 
 @bot.event
-async def createEvent():
+async def createEvent(event):
+    """
+    This method takes a dictionary named event,
+    pulls event data from it,
+    calculate what time corresponds to the next day of the week the event is scheduled for,
+    and formats a request to create a scheduled event
+    """
     global guild
-    global event
+
+    for event in data["eventList"]:
+        event_name = event["name"]
+        event_description = event["description"]
+        eventStartTimeHours = event["startTime"]["hour"]
+        eventStartTimeMinutes = event["startTime"]["minute"]
     
-    event = sched(
-        name=event_name,
-        description=event_description,
-        start_time=next_event_start,
-        end_time=next_event_end,
-        entity_type=discord.EntiyType.external,
-        location= "",
-        privacy_level= discord.PrivacyLevel.guild_only
-    )
-    """event = {
-        "name": event_name,
-        "description": event_description,
-        "start_time": next_event_start,
-        "end_time": next_event_end,
-        "entity_type": discord.EntityType.external,
-        "location": "",
-        "privacy_level": discord.PrivacyLevel.guild_only,
-    }"""
+        # Get the current time in UTC.
+        utc_now = pytz.utc.localize(datetime.datetime.now())
+
+        # Calculate the start and end times of the next event.
+        dayOfWeek = datetime.datetime.now(pytz.timezone("America/New_York")).weekday()
+        daysUntilMonday = (7 - dayOfWeek) % 7
+        nextMonday = datetime.timedelta(days=daysUntilMonday) + datetime.datetime.now(pytz.timezone("America/New_York"))
+        nextMonday = nextMonday.replace(hour=eventStartTimeHours, minute=eventStartTimeMinutes, second=0)
+
+        next_event_start = nextMonday
+        next_event_end = next_event_start + datetime.timedelta(hours=1)
+
+        event_to_create = sched(
+            name=event_name,
+            description=event_description,
+            start_time=next_event_start,
+            end_time=next_event_end,
+            entity_type=discord.EntiyType.external,
+            location= "",
+            privacy_level= discord.PrivacyLevel.guild_only
+        )
+
+        await guild.create_scheduled_event(**event_to_create)
 
 @bot.event
-async def checkEventExists():
+async def checkEventExists(event):
+    """
+    Checks all existing events in the server and see if any of there names match the event that is attempting to be created. Returns true if yes and false if no
+    """
     global guild
-    global event_name
-    events = await guild.fetch_scheduled_events()
-    for event in events:
-        if event.name == event_name:
+    existingEvents = await guild.fetch_scheduled_events()
+    for existingEvent in existingEvents:
+        if existingEvent.name == event["name"]:
             return True
     else:
         return False
 
-
-@bot.event
-async def on_ready():
-    print(f"We have logged in as {bot.user}")
-
+@tasks.loop(hours=24)
+async def eventTask():
     global guild
     guild = bot.get_guild(guildId)
 
-    eventExists = await checkEventExists()
-    if eventExists:
-        global event_name
-        print(f"Event Name: {event_name} already exists")
-        return
-    
-    await createEvent()
-    print("Before scheduled event")
-    await guild.create_scheduled_event(**event)
-    print("After Scheduled event")
+    eventList = data["eventList"]
+
+    for event in eventList:
+        eventExists = await checkEventExists(event)
+        if eventExists:
+            print(f"Event Name: {event['name']} already exists")
+            continue
+        
+        await createEvent(event)
+
+@bot.event
+async def on_ready():
+    """
+    Starts the eventTask and runs it every 24 hours
+    """
+    print(f"We have logged in as {bot.user}")
+    eventTask.start()
 
 # Start the bot.
 def run():
