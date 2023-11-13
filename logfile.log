@@ -1,0 +1,4 @@
+[2023-11-13 09:18:09] [WARNING ] discord.ext.commands.bot: Privileged message content intent is missing, commands may not work as expected.
+[2023-11-13 09:18:09] [INFO    ] discord.client: logging in using static token
+[2023-11-13 09:18:10] [INFO    ] discord.gateway: Shard ID None has connected to Gateway (Session ID: 094750ce04cfff73e90d2ef56bfd754f).
+[2023-11-13 09:18:22] [INFO    ] discord: Event Name: Minecraft Mondays already exists

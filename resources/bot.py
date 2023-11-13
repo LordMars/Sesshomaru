@@ -7,36 +7,24 @@ import datetime
 import os
 from models import ScheduleEventRequest as sched
 import asyncio
+import logging
 
-script_dir = os.path.dirname(os.path.realpath(__file__))
-jsonFile = os.path.join(script_dir, "botConfig.json")
-
-data = {}
-with open(jsonFile, "r") as f:
-    data = json.load(f)
-f.close()
+logger = logging.getLogger('discord')
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 bot = commands.Bot(intents=intents, command_prefix = '.')
 
-# Define the event name and description.
-token = data["token"]
-guildId = data["guildId"]
-
-guild = None
-
 @bot.event
-async def createEvent(event):
+async def createEvent(guild, event):
     """
     This method takes a dictionary named event,
     pulls event data from it,
     calculate what time corresponds to the next day of the week the event is scheduled for,
     and formats a request to create a scheduled event
     """
-    global guild
 
-    for event in data["eventList"]:
+    for event in bot.data["eventList"]:
         event_name = event["name"]
         event_description = event["description"]
         eventStartTimeHours = event["startTime"]["hour"]
@@ -67,11 +55,11 @@ async def createEvent(event):
         await guild.create_scheduled_event(**event_to_create)
 
 @bot.event
-async def checkEventExists(event):
+async def checkEventExists(guild, event):
     """
     Checks all existing events in the server and see if any of there names match the event that is attempting to be created. Returns true if yes and false if no
     """
-    global guild
+
     existingEvents = await guild.fetch_scheduled_events()
     for existingEvent in existingEvents:
         if existingEvent.name == event["name"]:
@@ -81,27 +69,37 @@ async def checkEventExists(event):
 
 @tasks.loop(hours=24)
 async def eventTask():
-    global guild
-    guild = bot.get_guild(guildId)
-
-    eventList = data["eventList"]
+    guild = bot.get_guild(bot.guildId)
+    eventList = bot.data["eventList"]
 
     for event in eventList:
-        eventExists = await checkEventExists(event)
+        eventExists = await checkEventExists(guild, event)
         if eventExists:
-            print(f"Event Name: {event['name']} already exists")
+            logger.info(f"Event Name: {event['name']} already exists")
             continue
         
-        await createEvent(event)
+        await createEvent(guild, event)
 
 @bot.event
 async def on_ready():
     """
     Starts the eventTask and runs it every 24 hours
     """
-    print(f"We have logged in as {bot.user}")
+    logger.info(f"We have logged in as {bot.user}")
     eventTask.start()
 
 # Start the bot.
 def run():
-    bot.run(token)
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    jsonFile = os.path.join(script_dir, "botConfig.json")
+
+    with open(jsonFile, "r") as f:
+        data = json.load(f)
+
+        # Define the event name and description.
+        token = data["token"]
+        bot.guildId = data["guildId"]
+        bot.data = data
+
+        bot.run(token)
+    f.close()
