@@ -2,7 +2,7 @@ This is the python script for the seshhomaru discord bot
 Its only current purpose is to create a minecraft event scheduled at 5:30PM pst each monday.
 
 The script itself does not schedule when it is run.
-That is to be done on the host machine, for example by way of TaskScheduler and batch files on windows machines.
+Done in the Sesshomaru seervice on a raspberry pi
 
 In order for the script to run correctly a few things are required.
 - a botConfig.json file in the resources directory
