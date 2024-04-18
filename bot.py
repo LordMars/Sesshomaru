@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 from discord.utils import get
-from handlers import poll, scheduledMessages, events
+from handlers import poll, tasks, scheduledMessages, events
 import logging
 import json
 import os
@@ -16,6 +16,8 @@ bot = commands.Bot(intents=intents, command_prefix = '.')
 async def on_ready():
     logger.info(f"We have logged in as {bot.user}")
     poll.setup(bot)
+    scheduledMessages.setup(bot)
+    tasks.setup(bot)
 
 # Start the bot.
 def run():
