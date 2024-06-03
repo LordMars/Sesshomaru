@@ -14,5 +14,5 @@ async def viewtasks(ctx):
 
 def setup(bot):
     bot.add_command(addtask)
-    bot.add_command(viewtasks)
+    #bot.add_command(viewtasks)
     pass

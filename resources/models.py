@@ -1,5 +1,46 @@
 from dataclasses import dataclass
+import datetime
+import collections
 
+@dataclass
+class Poll:
+    question = {
+        "text": "Imprison the Delaney?",
+    }
+    answers = [
+        {
+            "answer_id": 1,
+            "poll_media": {
+                "text": "YES!!!"
+            }
+        },
+        {
+            "answer_id": 2,
+            "poll_media": {
+                "text": "Meh."
+            }
+        },
+        {
+            "answer_id": 3,
+            "poll_media": {
+                "text": "nah"
+            }
+        }
+   ]
+    duration: int = 1
+    multi: bool = False
+    layout: int = 1
+
+    def getJson(self):
+        return {
+            "poll": {
+                "question": self.question,
+                "answers": self.answers,
+                "duration": self.duration,
+                "allow_multiselect": self.multi,
+                "layout_type": self.layout
+            }
+        }
 
 @dataclass
 class ScheduleEventRequest:

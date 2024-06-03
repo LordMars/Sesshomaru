@@ -1,11 +1,13 @@
 import discord
 from discord.ext import commands, tasks
 from discord.utils import get
-from handlers import poll, tasks, scheduledMessages, events
+from handlers import tasks, scheduledMessages, delaneyJail
 import logging
 import json
 import os
 import asyncio
+
+from handlers.deprecated import events, poll
 
 logger = logging.getLogger('discord')
 
@@ -17,6 +19,7 @@ async def on_ready():
     logger.info(f"We have logged in as {bot.user}")
     poll.setup(bot)
     scheduledMessages.setup(bot)
+    delaneyJail.setup(bot)
     tasks.setup(bot)
 
 # Start the bot.
@@ -29,6 +32,8 @@ def run():
 
         # Define the event name and description.
         token = data["token"]
+        delaneyJail.setToken(token)
+
         bot.guildId = data["guildId"]
         bot.data = data
 
