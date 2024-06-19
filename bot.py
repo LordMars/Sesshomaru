@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 from discord.utils import get
-from handlers import tasks, scheduledMessages, delaneyJail
+from handlers import tasks, scheduledMessages, delaneyJail, gameRequest
 import logging
 import json
 import os
@@ -20,6 +20,7 @@ async def on_ready():
     poll.setup(bot)
     scheduledMessages.setup(bot)
     delaneyJail.setup(bot)
+    gameRequest.setup(bot)
     tasks.setup(bot)
 
 # Start the bot.

@@ -31,6 +31,20 @@ class Poll:
     multi: bool = False
     layout: int = 1
 
+    def __init__(self, question: str, answers: list[str]):
+        self["question"]["text"] = question
+
+        if answers:
+            self["answers"] = []
+            for i in range(len(answers)):
+                answer = {
+                    "answer_id": i+1,
+                    "poll_media": {
+                        "text": answers[i]
+                    }
+                }
+                self["answers"].append(answer)
+
     def getJson(self):
         return {
             "poll": {
@@ -99,4 +113,25 @@ class ScheduleMessageRequest:
             "scheduledMinute": self.scheduledMinute,
             "channelId": self.channelId,
             "messageBody": self.messageBody
+        }
+    
+@dataclass
+class ActivityRequest:
+    userName = ""
+    memberId = None
+    request = ""
+    options = []
+
+    def __init__(self, request, options, memberId, userName):
+        self.memberId = memberId
+        self.userName = userName
+        self.request = request
+        self.options = options
+
+    def getJson(self):
+        return {
+            "userName": self.userName,
+            "memberId": self.memberId,
+            "request": self.request,
+            "options": self.options
         }
